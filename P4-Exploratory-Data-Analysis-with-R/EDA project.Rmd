@@ -1,0 +1,559 @@
+
+Exploratory Data Analysis of the Prosper Data Set
+
+By Adam Friedman
+
+========================================================
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(knitr)
+library(GGally)
+
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+setwd('c:/users/adam.friedman/dand/eda/project')
+pld <- read.csv('prosperloandata.csv')
+
+```
+
+### The Data Set
+
+Prosper is a lending platform which allows people to invest in others (borrowers) by partially funding loans. Borrowers list loan requests on the site and investors can select the loans they're interested in and invest (with a minimum of $25). This data set contains information about every loan granted on the Prosper platform between the founding date (2005) and March 2014. There are 113937 observations with 81 variables.
+
+
+# Univariate Plots Section
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots}
+
+pld$LoanYear <- str_sub(pld$LoanOriginationQuarter, -4)
+pld$LoanQuarter <- str_sub(pld$LoanOriginationQuarter,1,2)
+
+qplot(x = LoanYear, data = pld, 
+      fill= I("blue"), 
+      col = I("black"), 
+      xlab = "Year of Loan Origination", ylab = "Count", 
+      main = "Number of Loan Originations by Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+In November 2008 the SEC found Prosper to be in violation of the Securities Act of 1933 and a cease and desist was issued. Prosper relaunched in July 2009 with new terms which satisfied the SEC's requirements. This can be seen in the graph above, where loan volumes dropped significantly in 2009 due to only being open for business half the year and a drop in consumer confidence. Since then, loan volumes have grown significantly year on year. 2014 also shows promising growth as the data set only takes into account the first quarter of the year.
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots2}
+
+qplot(x = LoanQuarter, data = pld, 
+      fill= I("steelblue3"), 
+      col = I("black"), 
+      xlab = "Quarter of Loan Origination", ylab = "Count", 
+      main = "Number of Loan Originations by Quarter") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+Borrowers' seem to list fewer loans in the 2nd quarter of the year, with quarters 1 and 4 having the most activity. Perhaps this has to do with people spending more around the December festive season.
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots3}
+
+qplot(x = LoanOriginalAmount, data = pld, 
+      binwidth = 1000, 
+      fill= I("dodgerblue3"), 
+      col = I("black"), 
+      xlab = "Loan Amount", ylab = "Count", 
+      main = "Histogram of Loan Amount") +
+  scale_x_continuous(breaks = seq(0, 40000, 5000)) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The most popular loan range is \$3001 to \$4000. The histogram suggests that borrowers tend to round their loan requests to multiples of \$5000, particularly for loan amounts greater than \$10000. \$35000 is the maximum loan size on the Prosper platform.
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots4}
+
+qplot(x = LoanOriginalAmount, data = pld, 
+      binwidth = 100, 
+      fill= I("dodgerblue3"), 
+      col = I("black"), 
+      xlab = "Loan Amount", ylab = "Count", 
+      main = "Histogram of Loan Amount") +
+  scale_x_continuous(breaks = seq(0, 10000, 1000), limits = c(0,10100)) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Focusing on the loans less than or equal to \$10000 and decreasing the bin sizes to \$100, we can see that for these loans borrowers tend to round their loan requests to multiples of \$1000. This histogram also shows the minimum loan size of \$1000 (this was changed to \$2000 in 2010.
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots5}
+
+qplot(x = MonthlyLoanPayment, data = pld, 
+      fill= I("forestgreen"), 
+      col = I("black"), 
+      xlab = "Monthly Loan Payments", ylab = "Count", 
+      main = "Histogram of Monthly Loan Payments",
+      binwidth = 25) +
+  scale_x_continuous(breaks = seq(0, 1000, 50), limits = c(0,1000)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+The bin with the most common monthly payment size is \$151 to \$175.
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots6}
+
+print('Monthly Loan Payment Quartiles')
+quantile(pld$MonthlyLoanPayment)
+
+```
+
+3 quarters of the monthly payments are less than \$371.58. Although the largest payment is \$2251.51, only 444 (0.4%) of the loans had monthly payments greater than \$1000.
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots7, fig.width= 9}
+
+qplot(x = IncomeRange, data = pld, 
+      fill= I("springgreen4"), 
+      col = I("black"), 
+      xlab = "Borrower Income Range", ylab = "Count", 
+      main = "Histogram of Income Range",) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The distribution of borrowers' incomes resembles a normal distribution. Most borrowers fall into the \$25,000 - \$49,999 range.
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots8}
+
+qplot(x = DebtToIncomeRatio, data = pld, 
+      fill= I("blue"), 
+      col = I("black"), 
+      xlab = "Debt to Income Ratios at Loan Origination Date", ylab = "Count", 
+      main = "Histogram of Debt to Income Ratios",
+      binwidth = 0.05) +
+  scale_x_continuous(limits = c(0,1), breaks = seq(0,1,0.1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r echo=FALSE, warning = FALSE, message = FALSE, Univariate_Plots9}
+pld$EmploymentDurationYears <- pld$EmploymentStatusDuration / 12
+
+qplot(x = EmploymentDurationYears, data = pld, 
+      fill= I("blue"), 
+      col = I("black"), 
+      xlab = "Employment Duration (Years)", ylab = "Count", 
+      main = "Histogram of Borrowers' Employment Duration",
+      binwidth = 1) +
+  scale_x_continuous(limits = c(0,50),breaks = seq(0,50, 2)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(aes(x = EmploymentDurationYears), data = subset(pld, pld$EmploymentDurationYears != 0), 
+      xlab = "Employment Duration (Years)", ylab = "Count",
+      binwidth = 1) +
+  geom_histogram() +
+  scale_x_log10() +
+  ggtitle("Histogram of Borrowers' Employment Duration (Log10)") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+The plot of employment duration exhibits extreme skewness. This is intuitive as Prosper's offering is likely to attract relatively young borrowers compared to traditional lending methods. Once the data is tranformed to a log10 base, it resembles a normal distribution.
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots10}
+
+pld$CreditScore <- (pld$CreditScoreRangeLower + pld$CreditScoreRangeUpper)/2
+
+qplot(x = CreditScore, data = pld, 
+      fill= I("grey"), 
+      col = I("black"), 
+      xlab = "Credit Score", ylab = "Count", 
+      main = "Borrowers' Credit Scores",
+      binwidth = 25) +
+  scale_x_continuous(breaks = seq(0,900,50),limits = c(350,1000)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+There is a concentration of borrowers with credit scores between (and including) 676 and 700.
+
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots11}
+
+
+qplot(x = ProsperScore, data = pld, 
+      fill= I("grey"), 
+      col = I("black"), 
+      xlab = "ProsperScore", ylab = "Count", 
+      main = "ProsperScore of Borrowers",
+      binwidth = 1) +
+  scale_x_continuous(breaks = seq(1,11,1),limits = c(0,12)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+  
+```
+
+The ProsperScore rates a borrower's risk on a scale of 1-11, with 11 being the lowest risk. A ProsperScore of 11 was introduced in 2013, previously the ranking went up to 10.
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots20}
+
+
+qplot(x = InquiriesLast6Months, data = pld, 
+      fill= I("grey"), 
+      col = I("black"), 
+      xlab = "Number of Inquiries", ylab = "Count", 
+      main = "Number of Inquiries on the Credit Bureau in the Last 6 Months",
+      binwidth = 1) +
+  scale_x_continuous(limits = c(-1,20)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+  
+```
+
+The majority of borrowers have had zero enquiries.
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots13}
+
+pld_def <- subset(pld, pld$LoanStatus == 'Defaulted')
+
+qplot(x = ProsperScore, data = pld_def, 
+      fill= I("grey"), 
+      col = I("black"), 
+      xlab = "ProsperScore", ylab = "Count", 
+      main = "ProsperScore of Borrowers with Defaulted Loans",
+      binwidth = 1) +
+  scale_x_continuous(breaks = seq(1,11,1),limits = c(0,12)) +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+
+Limiting the data set to defaulted loans, the distribution is similar to that of the ProsperScores of all borrowers. There do seem to be proportionately more defaults coming from borrowers with lower scores. There are more defaults than I expected from the borrowers with high ProsperScores.
+
+
+
+# Univariate Analysis
+
+### What is/are the main feature(s) of interest in your dataset?
+
+There are many variables in this dataset, I'm mainly interested in how the ProsperScore informs other aspects of the loan data.
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+
+The loan origination year could highlight trends among variables such as loan size and spread. 
+
+### Did you create any new variables from existing variables in the dataset?
+
+Yes, I added a column to indicate the loan origination year. I also took the average of CreditScoreRangeLower and CreditScoreRangeUpper
+in order to have 1 value as the credit score.
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+Yes, the employment duration plot was heavily negatively skewed. With a log10 base applied, the data resembles a normal distribution. I also showed the Employment Duration in years rather than months in order to make the graph easier to interptret.
+
+
+
+# Bivariate Plots Section
+
+
+```{r echo=FALSE, warning = FALSE, Univariate_Plots12}
+
+
+qplot(x = ProsperScore, data = subset(pld,pld$LoanYear >= 2009),
+      fill= I("slategray3"), 
+      col = I("black"), 
+      xlab = "ProsperScore", ylab = "Count", 
+      main = "ProsperScore of Borrowers Split by Loan Origination Year",
+      binwidth = 1) +
+  scale_x_continuous(breaks = seq(1,11,1),limits = c(0,12)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(~LoanYear, scales = "free")
+
+```
+
+
+The ProsperScores of funded borrowers have changed over the 6 year period. Investors seem to be more willing to lend to riskier borrowers as the years progress.
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots}
+
+ggplot(aes(x = LoanQuarter, y = LoanOriginalAmount), data = pld) + 
+  geom_boxplot() +
+  ggtitle("Loan Amounts per Quarter") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+We've already seen a difference in the number loans originated per quarter. Do the average loan sizes differ dramatically among the quarters?
+
+We see a similar trend with the loan amounts as the volumes. The loan amounts tend to be slightly higher in quarters 1 and 4 compared to 2 and 3.
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots2}
+
+ggplot(aes(factor(ProsperScore), InquiriesLast6Months), data = (na.omit(subset(pld, pld$LoanYear >=2009)))) + 
+  geom_boxplot() +
+  ggtitle("Number of Inquiries on the Credit Bureau in the Last 6 Months per ProsperScore") +
+  xlab("ProsperScore") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+
+As the ProsperScore increases, the number of inquiries decreases. I expect to see this relationship as the number of inquiries is a component of the ProsperScore.
+
+
+
+
+```{r echo=FALSE, warning = FALSE,  Bivariate_Plots3}
+
+ggplot(aes(factor(ProsperScore), DebtToIncomeRatio), data = (na.omit(subset(pld, pld$LoanYear >=2009)))) + 
+  geom_boxplot() +
+  ylim(0,2) +
+  xlab("ProsperScore") +
+  ggtitle("Borrowers' Debt to Income Ratios per ProsperScore") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+As expected, those with higher ProsperScores have more conservative debt to income ratios
+
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots4}
+
+ggplot(aes(x = StatedMonthlyIncome, y = LoanOriginalAmount), data = pld) + 
+  geom_point(alpha = 1/2, position = 'jitter') +
+  scale_x_continuous(limits = c(0,150000)) +
+  ggtitle("Monthly Income vs Loan Amount") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+
+Again we can see the popular loan amounts, this time as horizontal lines. The size of the loans have a very weak correlation to the borrower's income level as the correlation coefficient is only 0.2.
+
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots5}
+
+ggplot(aes(x = EmploymentDurationYears, y = LoanOriginalAmount), data = pld) + 
+  geom_point(alpha = 1/10, position = 'jitter') +
+  geom_smooth(method=lm) +
+  ggtitle("Loan Amount vs Employment Duration") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+
+With a correlation coefficient of 0.1, there is no correlation between the size of the loans and how long the borrowers have been employed.
+
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots6}
+
+ggplot(aes(factor(ProsperScore), LoanOriginalAmount), data = subset(pld, pld$LoanYear >=2009)) + 
+  geom_boxplot() +
+  ggtitle("Loan Amounts per ProsperScore") +
+  xlim("1","2","3","4","5","6","7","8","9","10","11") +
+  xlab("ProsperScore") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+Borrowers with low ProsperScores seem to not be able to take out as big loans as those with high ProsperScores.
+
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots7}
+
+ggplot(aes(factor(ProsperScore), LenderYield), data = subset(pld, pld$LoanYear >=2009)) + 
+  geom_boxplot() +
+  ggtitle("Lender Yield per ProsperScore") +
+  xlim("1","2","3","4","5","6","7","8","9","10","11") +
+  xlab("ProsperScore") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+This graph demonstrates that although investors are happy to lend money to riskier borrowers, they expect better compensation in exchange for taking on more risk.
+
+
+
+
+```{r echo=FALSE, warning = FALSE, Bivariate_Plots8}
+
+ggplot(aes(x = CreditScore, y = ProsperScore), data = pld) + 
+  geom_point(alpha = 1/30, position = 'jitter', aes(color=ProsperScore)) +
+  xlim(c(590,800)) +
+  ylim("1","2","3","4","5","6","7","8","9","10","11") +
+  ggtitle("ProsperScore vs Credit Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+cor.test(pld$CreditScore, pld$ProsperScore, method = 'pearson')
+
+```
+
+Do borrowers with high ProsperScores always have high credit scores?
+
+The correlation coefficient of 0.37 suggests that there is a correlation between the 2 but there must be differing factors between their calculations. The graph shows that having a high credit score does not ensure a high ProsperScore and vise versa.
+
+
+
+
+```{r echo=FALSE, warning = FALSE,  Bivariate_Plots9}
+
+ggplot(aes(LenderYield, LoanOriginalAmount), data = pld) +
+  geom_point(alpha = 0.06, position = 'jitter') +
+  geom_smooth(method=lm) +
+  ggtitle("Employment Status vs Percent Funded") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+cor.test(pld$LenderYield, pld$LoanOriginalAmount, method = 'pearson')
+
+```
+
+There is a weak negative correlation between the size of the loan and the yield on the loan. So when the loan size goes up, the borrower receives a cheaper rate. In this case, I think it's the really the quality of the borrower impacting the rate. As we saw previously, higher quality borrowers tend to be able to borrow larger amounts and they also receive more preferable rates due to being lower risk.
+
+
+
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+
+The analysis shows the benefit of having a high ProsperScore as it's easier to borrower large amounts and one receives a more preferable rate. There doesn't seem to be an extremely dominant factor in the ProsperScore calculation i.e if a borrower scores poorly in one area (e.g. a higher than average debt to income ratio), this doesn't mean the borrower will automatically recieve a poor ProsperScore.
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+I was surprised to see that the length of a borrower's employment doesn't seem to have an impact on the size of loan investors are willing to give.
+
+### What was the strongest relationship you found?
+
+The strongest relationship I found is between ProsperScore and Credit Score. Although they don't seem to be calculated in the same way, there is definitely overlap among the inputs for each rating.
+
+
+# Multivariate Plots Section
+
+
+```{r echo=FALSE, warning = FALSE, Multivariate_Plots}
+
+pld.By_Loan_Year <- pld %>%
+  filter(!is.na(ProsperScore)) %>%
+  group_by(LoanYear,ProsperScore) %>%
+  summarise(mean_LoanAmount= mean(LoanOriginalAmount)) %>%
+  ungroup() %>%
+  arrange(LoanYear)
+
+ggplot(aes(x = ProsperScore, y = mean_LoanAmount, color = LoanYear), 
+      data = pld.By_Loan_Year) +  
+      xlim("1","2","3","4","5","6","7","8","9","10","11") +
+      ylab("Mean Loan Amount") +
+      ggtitle("Mean Loan Amounts per Year per ProsperScore") +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      geom_line()
+
+
+```
+
+Previously we've looked at the most popular loan amounts. This plot continues with that thought by illustrating how the funded loan amounts are changing over time. The loan sizes are generally increasing over time.
+
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+As the years pass, borrowers are taking larger loans on average and the mean loan size is increasing across all ProsperScores.
+
+
+### Were there any interesting or surprising interactions between features?
+
+The spread is widening between the loan sizes of the lower ProsperScores and the loan sizes of the higher ProsperScores.
+
+------
+
+# Final Plots and Summary
+
+
+```{r echo=FALSE, warning = FALSE, Plot_One}
+
+qplot(x = LoanYear, data = pld, 
+      fill= I("steelblue3"), 
+      col = I("black"), 
+      xlab = "Year of Loan Origination", 
+      ylab = "Number of Loans",
+      main = "Number of Loans Successfully Funded to Borrowers per Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+In the first graph we see that volumes plummeted in 2009 due to the global financial crisis causing Prosper to close for business for half the year. At the time Prosper relaunched, investors were extremely weary of investments in general and Prosper was still unproven which probably caused greater hesitence. In 2011 loan volumes reached the same level as 4 years prior and then 2012 and 2013 were record breaking years. It looks like investors started gaining confidence in the platform.
+
+
+
+```{r echo=FALSE, warning = FALSE, fig.width= 9, Plot_Three}
+
+
+qplot(x = ProsperScore, data = subset(pld,pld$LoanYear >= 2009),
+      fill= I("slategray3"), 
+      col = I("black"), 
+      xlab = "ProsperScore", 
+      ylab = "Number of Loans",
+      main = "The Number of Loans Funded to Borrowers per ProsperScore, Split by the Year of Origination",
+      binwidth = 1) +
+  scale_x_continuous(breaks = seq(1,11,1),limits = c(0,12)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(~LoanYear, scales = "free")
+
+```
+
+The second plot also speaks to investor confidence. In 2009 and 2010 the majority of loans were granted to borrowers with high ProsperScores. Then a shift started occuring to lending to borrowers with lower ProsperScores. I believe this is because investors started gaining confidence and figured it was better to lend to these riskier borrowers as they could be charged a much higher interest rate. With global interest rates declining, investors were on a search for high yielding investments.
+
+
+
+```{r echo=FALSE, warning = FALSE, Plot_Two}
+
+ggplot(aes(x = ProsperScore, y = mean_LoanAmount, color = LoanYear), 
+      data = pld.By_Loan_Year) +  
+      xlim("1","2","3","4","5","6","7","8","9","10","11") +
+      ylab("Mean Loan Amount (USD)") +
+      ggtitle("The Mean Loan Amount Granted Each Year to Borrowers From Each ProsperScore") +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      geom_line()
+
+```
+
+Now take the third plot into account. Not only have we seen higher volumes year on year to riskier customers (previous plot), but now we see that the average loan amount has also been increasing. This could be another sign that investors are gaining confidence in the platform.
+
+On one hand, it's amazing that this kind of technology can bring borrowers and investors together. People who may not have access to traditional forms of borrowing can now borrow money and hopefully use it to improve their lives. On the other hand, it's a concern that people are forgetting the crisis of 2008/2009 and might be going down the same path of reckless lending in a search for higher returns.
+
+
+------
+
+# Reflection
+
+I find it incredible that Prosper makes this data available! It's a great step towards transparency in the financial services industry and it empowers investors to make educated decisions. Overall I thought the data came in a clean state and in a good format for analysis. At first the number of variables was quite overwhelming and I found it difficult to formulate a good line of questioning and find a main feature as there was so much going on. I started by exploring information on single variables and then understanding how the variables interact. Once I did this, I became interested in what information could be seen when splitting the borrowers' by their ProsperScores, as well as details around each score's loans. It was interesting to see that Prosper have devised their own ranking which, although it has a lot in common with the credit score, is actually quite different. My disappointment is that I thought I would be able to find stronger correlations between variables. I was successful in gaining some insight into the confidence levels of investors who are investing through the Prosper platform.
+
+Considering the number of variables in the data set, one could continue to discover relationships. The analysis could be continued to analyse every variable against the ProsperScore to understand exactly how the different factors are weighted in the decision. Machine learning algorithms could even be used to do this. The next step would be to use statistical techniques to understand whether those factors are really a good predictor of the chances of the borrower defaulting.

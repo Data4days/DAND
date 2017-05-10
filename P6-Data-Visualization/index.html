@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<div id="chartContainer">
+    <meta charset="utf-8">
+    <style>
+
+        body {
+            font: 14px sans-serif;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.3.0.min.js"></script>
+    <script type="text/javascript">
+        
+		d3.select('body')
+            .append('p')
+            .text("The data set contains the batting averages and number of homeruns hit for 1157 Major League Baseball batters. The plot illustrates the asymptotic relationship between batting average and homeruns scored, which can be seen by the sharp increase in homeruns scored when the batting average is greater than 0.2. Click on the legend to filter by handedness (right, left or both/ambidextrous)");
+
+			
+        var svg = dimple.newSvg('#chartContainer', 1200, 600);
+        d3.csv('baseball_data.csv', function (error, data) {
+            data.forEach(function (d) {
+                d.weight = +d.weight;
+                d.HR = +d.HR;
+                d.bavg = +d.bavg;
+                d.height = +d.height;
+            });
+            // Creates the chart 
+            var chart = new dimple.chart(svg, data);
+            chart.setBounds(60, 30, 800, 500);
+            // Creates x and y axis with parameters
+            var xAxis = chart.addMeasureAxis('x', 'avg');
+            var yAxis = chart.addMeasureAxis('y', 'HR');
+            xAxis.overrideMin = 0;
+            xAxis.overrideMax = 0.34;
+            xAxis.title = 'Batting Average';
+			xAxis.fontSize = "auto";
+            yAxis.title = 'Number of Home Runs';
+			yAxis.fontSize = "auto";
+			
+            // Add points and color by 'handedness'
+            chart.addSeries([
+                'name', 'handedness'
+            ], dimple.plot.bubble);
+			
+            // Legend
+            var myLegend = chart.addLegend(860, 112, 75, 375, 'Right');
+            chart.draw();
+            // Title
+            svg.append('text')
+                .attr('x', chart._xPixels() + chart._widthPixels() / 2)
+                .attr('y', chart._yPixels() - 20)
+                .style('text-anchor', 'middle')
+                .text('The Relationship Between Batting Averages and Number of Homeruns Scored by MLB Batters');
+            chart.legends = [];
+            svg.selectAll('title_text')
+                .data(['Click legend to', 'exclude group:'])
+                .enter()
+                .append('text')
+                .attr('x', 875)
+                .attr('y', function (d, i) {
+                    return 90 + i * 14;
+                })
+                .style('font-family', 'sans-serif')
+                .style('font-size', '10px')
+                .style('color', 'Black')
+                .text(function (d) {
+                    return d;
+                });
+            // Handedness filter
+            var filterValues = dimple.getUniqueValues(data, 'handedness');
+            myLegend.shapes
+                .selectAll('rect')
+                .on('click', function (e) {
+                    var hide = false;
+                    var newFilters = [];
+                    filterValues.forEach(function (f) {
+                        if (f === e.aggField.slice(-1)[0]) {
+                            hide = true;
+                        } else {
+                            newFilters.push(f);
+                        }
+                    });
+                    // Hide or show
+                    if (hide) {
+                        d3
+                            .select(this)
+                            .style('opacity', 0.2);
+                    } else {
+                        newFilters.push(e.aggField.slice(-1)[0]);
+                        d3
+                            .select(this)
+                            .style('opacity', 0.8);
+                    }
+                    filterValues = newFilters;
+                    chart.data = dimple.filterData(data, 'handedness', filterValues);
+                    chart.draw(800);
+                });
+        });
+    </script>
+</div>
+
+</body>
