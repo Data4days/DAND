@@ -2,6 +2,7 @@
 # OpenStreetMap Data Case Study
 
 By: Adam Friedman
+
 March 2017
 
 ### Map Area
