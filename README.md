@@ -1,4 +1,6 @@
-These projects formed part of the Udacity Data Analyst Nanodegree.
+#DAND
+
+Some of my submissions for the Udacity Data Analyst Nanodegree.
 
 P2 - Investigate a Dataset: Investigating Lahman's Baseball Database using python.
 
